@@ -65,7 +65,7 @@ func main() {
 	transactionsH := &handlers.TransactionsHandler{Store: s}
 	eventsH := &handlers.EventsHandler{Store: s}
 	notifSettingsH := &handlers.NotificationSettingsHandler{Store: s}
-	adminH := &handlers.AdminHandler{Store: s, Webhook: notifier, SeedEnabled: !*noSeed}
+	adminH := &handlers.AdminHandler{Store: s, Webhook: notifier, SeedEnabled: !*noSeed, DefaultWebhookURL: *webhookURL}
 
 	mux := http.NewServeMux()
 

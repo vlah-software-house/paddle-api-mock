@@ -12,9 +12,10 @@ import (
 )
 
 type AdminHandler struct {
-	Store       *store.Store
-	Webhook     *webhook.Notifier
-	SeedEnabled bool
+	Store             *store.Store
+	Webhook           *webhook.Notifier
+	SeedEnabled       bool
+	DefaultWebhookURL string
 }
 
 func (h *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -38,6 +39,29 @@ func (h *AdminHandler) reset(w http.ResponseWriter, r *http.Request) {
 	h.Store.Reset()
 	if h.SeedEnabled {
 		seed.Load(h.Store)
+	}
+	// Re-register the default webhook URL so webhooks continue to fire after reset.
+	if h.DefaultWebhookURL != "" {
+		now := time.Now().UTC()
+		h.Store.SetNotificationSetting(&models.NotificationSetting{
+			ID:          store.NextID("ntfset"),
+			Description: "Default webhook (from CLI)",
+			Destination: h.DefaultWebhookURL,
+			Active:      true,
+			APIVersion:  1,
+			SubscribedEvents: []string{
+				"subscription.created",
+				"subscription.updated",
+				"subscription.activated",
+				"subscription.canceled",
+				"subscription.past_due",
+				"transaction.completed",
+				"transaction.payment_failed",
+			},
+			Type:      "url",
+			CreatedAt: now,
+			UpdatedAt: now,
+		})
 	}
 	respond(w, r, http.StatusOK, map[string]string{"status": "reset"})
 }
